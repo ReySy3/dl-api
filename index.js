@@ -1,59 +1,42 @@
 const express = require('express');
 const axios = require('axios');
-const cheerio = require('cheerio');
-const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
-app.use(cors());
+const port = 3000;
 
-const PORT = process.env.PORT || 3000;
-
-// Endpoint to fetch media from a URL
 app.get('/download', async (req, res) => {
-    const { url } = req.query;
+  const mediaUrl = req.query.url;
 
-    if (!url) {
-        return res.status(400).json({ error: "URL is required" });
-    }
+  if (!mediaUrl) {
+    return res.status(400).send('No URL provided');
+  }
 
-    try {
-        // Fetch the HTML content of the URL
-        const response = await axios.get(url);
-        const $ = cheerio.load(response.data);
+  try {
+    const response = await axios.get(mediaUrl, { responseType: 'stream' });
+    const fileName = path.basename(mediaUrl);
+    const filePath = path.join(__dirname, fileName);
+    const writer = fs.createWriteStream(filePath);
 
-        // Find all media links (images and videos)
-        const mediaLinks = [];
-        
-        // Extract image links
-        $('img').each((_, element) => {
-            const src = $(element).attr('src');
-            if (src) {
-                mediaLinks.push(src);
-            }
-        });
+    response.data.pipe(writer);
 
-        // Extract video links
-        $('video').each((_, element) => {
-            const src = $(element).attr('src');
-            if (src) {
-                mediaLinks.push(src);
-            }
-        });
-
-        // Check if any media was found
-        if (mediaLinks.length === 0) {
-            return res.status(404).json({ error: "No media found" });
+    writer.on('finish', () => {
+      res.download(filePath, fileName, (err) => {
+        if (err) {
+          res.status(500).send('Error downloading file');
         }
+      });
+    });
 
-        // Return the media links
-        res.json({ mediaLinks });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to fetch media" });
-    }
+    writer.on('error', () => {
+      res.status(500).send('Error saving file');
+    });
+  } catch (error) {
+    res.status(500).send('Error fetching media');
+  }
 });
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
