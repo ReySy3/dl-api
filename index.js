@@ -6,6 +6,12 @@ const path = require('path');
 const app = express();
 const port = 3000;
 
+// Root route
+app.get('/', (req, res) => {
+  res.send('Welcome to the media downloader API');
+});
+
+// Download media route
 app.get('/download', async (req, res) => {
   const mediaUrl = req.query.url;
 
