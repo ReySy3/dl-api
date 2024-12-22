@@ -1,8 +1,5 @@
 const express = require('express');
 const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-
 const app = express();
 const port = 3000;
 
@@ -20,26 +17,16 @@ app.get('/download', async (req, res) => {
   }
 
   try {
-    const response = await axios.get(mediaUrl, { responseType: 'stream' });
-    const fileName = path.basename(mediaUrl);
-    const filePath = path.join(__dirname, fileName);
-    const writer = fs.createWriteStream(filePath);
+    // Simulate fetching media from a URL (replace with actual logic)
+    const mediaResponse = await axios.get(mediaUrl); // Replace with media fetching logic
 
-    response.data.pipe(writer);
+    // Assume we get a direct downloadable link (e.g., from an API or web scraping)
+    const downloadLink = 'https://example.com/path/to/media/file.mp4'; // Replace with real link extraction logic
 
-    writer.on('finish', () => {
-      res.download(filePath, fileName, (err) => {
-        if (err) {
-          res.status(500).json({ error: 'Error downloading file' });
-        }
-      });
-    });
-
-    writer.on('error', () => {
-      res.status(500).json({ error: 'Error saving file' });
-    });
+    // Return the downloadable link
+    res.json({ downloadLink });
   } catch (error) {
-    res.status(500).json({ error: 'Error fetching media' });
+    res.status(500).json({ error: 'Error fetching media from the provided URL' });
   }
 });
 
