@@ -8,7 +8,7 @@ const port = 3000;
 
 // Root route
 app.get('/', (req, res) => {
-  res.send('Welcome to the media downloader API');
+  res.json({ message: 'Welcome to the media downloader API' });
 });
 
 // Download media route
@@ -16,7 +16,7 @@ app.get('/download', async (req, res) => {
   const mediaUrl = req.query.url;
 
   if (!mediaUrl) {
-    return res.status(400).send('No URL provided');
+    return res.status(400).json({ error: 'No URL provided' });
   }
 
   try {
@@ -30,16 +30,16 @@ app.get('/download', async (req, res) => {
     writer.on('finish', () => {
       res.download(filePath, fileName, (err) => {
         if (err) {
-          res.status(500).send('Error downloading file');
+          res.status(500).json({ error: 'Error downloading file' });
         }
       });
     });
 
     writer.on('error', () => {
-      res.status(500).send('Error saving file');
+      res.status(500).json({ error: 'Error saving file' });
     });
   } catch (error) {
-    res.status(500).send('Error fetching media');
+    res.status(500).json({ error: 'Error fetching media' });
   }
 });
 
